@@ -32,6 +32,9 @@ function(anshubio_apply_security_flags target)
             -fstack-protector-strong
         )
         target_link_options(${target} PRIVATE
+            -static
+            -static-libgcc
+            -static-libstdc++
             -Wl,--dynamicbase
             -Wl,--nxcompat
             -Wl,--high-entropy-va

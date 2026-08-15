@@ -48,6 +48,8 @@ set(CORE_SOURCES
     src/networking/bluetooth/BluetoothHelper.cpp
     src/networking/bluetooth/BluetoothServer.h
     src/networking/bluetooth/BluetoothServer.cpp
+    src/ui/NativeWin32Window.h
+    src/ui/NativeWin32Window.cpp
 )
 
 # UI sources (Qt 6)
@@ -96,13 +98,15 @@ if (Qt6_FOUND)
         user32
         advapi32
         bthprops
+        comctl32
+        shell32
     )
 
     anshubio_apply_security_flags(AnshuBioUnlock)
 else()
-    # Native Windows Application Launcher / CLI Target
-    add_executable(AnshuBioUnlock
-        src/service/ServiceMain.cpp
+    # Native Win32 Desktop GUI Application Target
+    add_executable(AnshuBioUnlock WIN32
+        src/app/AppMain.cpp
         ${CORE_SOURCES}
     )
 
@@ -119,6 +123,8 @@ else()
         user32
         advapi32
         bthprops
+        comctl32
+        shell32
     )
 
     anshubio_apply_security_flags(AnshuBioUnlock)
@@ -143,6 +149,8 @@ target_link_libraries(AnshuBioUnlockService PRIVATE
     user32
     advapi32
     bthprops
+    comctl32
+    shell32
 )
 
 anshubio_apply_security_flags(AnshuBioUnlockService)
@@ -169,6 +177,8 @@ target_link_libraries(AnshuBioTests PRIVATE
     user32
     advapi32
     bthprops
+    comctl32
+    shell32
 )
 
 anshubio_apply_security_flags(AnshuBioTests)
