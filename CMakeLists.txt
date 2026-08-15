@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(AnshuBioUnlock VERSION 1.0.0 LANGUAGES CXX C)
+project(AnshuBioUnlock VERSION 1.0.0 LANGUAGES CXX C RC)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,6 +11,15 @@ include(AnshuBioUtils)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Custom Command for compiling app.rc without path-space splitting in windres
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/app_res.obj
+    COMMAND ${CMAKE_RC_COMPILER} -i "${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc" -o "${CMAKE_BINARY_DIR}/app_res.obj"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc"
+    COMMENT "Compiling application version and manifest resources"
+)
+set(APP_RESOURCE ${CMAKE_BINARY_DIR}/app_res.obj)
 
 # Find Qt 6 Packages
 find_package(Qt6 COMPONENTS Core Gui Widgets Network QUIET)
@@ -82,7 +91,7 @@ if (Qt6_FOUND)
         src/app/main.cpp
         ${CORE_SOURCES}
         ${UI_SOURCES}
-        resources/app.rc
+        ${APP_RESOURCE}
     )
 
     target_include_directories(AnshuBioUnlock PRIVATE
@@ -112,6 +121,7 @@ else()
     add_executable(AnshuBioUnlock WIN32
         src/app/AppMain.cpp
         ${CORE_SOURCES}
+        ${APP_RESOURCE}
     )
 
     target_include_directories(AnshuBioUnlock PRIVATE
@@ -142,6 +152,7 @@ endif()
 add_executable(AnshuBioUnlockService
     src/service/ServiceMain.cpp
     ${CORE_SOURCES}
+    ${APP_RESOURCE}
 )
 
 target_include_directories(AnshuBioUnlockService PRIVATE
@@ -170,6 +181,7 @@ add_subdirectory(credential_provider)
 add_executable(AnshuBioTests
     tests/TestRunner.cpp
     ${CORE_SOURCES}
+    ${APP_RESOURCE}
 )
 
 target_include_directories(AnshuBioTests PRIVATE
