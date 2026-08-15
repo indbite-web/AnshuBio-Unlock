@@ -16,6 +16,7 @@
 #include "../ui/MainWindow.h"
 #else
 #include "../ui/NativeWin32Window.h"
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 #endif
 
 int main(int argc, char* argv[]) {
