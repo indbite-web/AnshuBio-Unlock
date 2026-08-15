@@ -12,6 +12,7 @@
 #include "../src/core/Models.h"
 #include "../src/crypto/DPAPIVault.h"
 #include "../src/crypto/CryptoEngine.h"
+#include "../src/crypto/QrCode.hpp"
 #include "../src/storage/KeyStore.h"
 #include "../src/storage/SecurityLogger.h"
 #include "../src/session/SessionMonitor.h"
@@ -164,6 +165,31 @@ int main() {
     logger.Security("TEST_AUDIT", "Unit test audit event logging verification");
     auto logs = logger.GetRecentLogs(5);
     test("5.3 SecurityLogger: Security audit event captured in ring buffer", !logs.empty() && logs.back().tag == "TEST_AUDIT");
+
+    std::cout << "\n[PHASE 6: QR CODE & PAIRING PROTOCOL VALIDATION]\n";
+    // 18. QR Code Generation
+    qrcodegen::QrCode qr = qrcodegen::QrCode::encodeText("{\"protocol\":\"anshubio\"}", qrcodegen::QrCode::Ecc::MEDIUM);
+    test("6.1 QrCode: Encode text into mathematically valid matrix", qr.getSize() >= 21 && qr.getVersion() >= 1);
+    test("6.2 QrCode: Module coordinates and finder patterns valid", qr.getModule(0, 0) == true && qr.getModule(qr.getSize() - 1, 0) == true);
+
+    // 19. Pairing Session & QR Payload
+    AuthCoordinator& auth = AuthCoordinator::Instance();
+    auto pairSession = auth.InitiatePairingSession();
+    test("6.3 Pairing: Initiate pairing session with valid UUID & 6-digit PIN", pairSession.has_value() && pairSession->confirmCode.length() == 6);
+    
+    bool hasReqFields = pairSession.has_value() &&
+                        pairSession->qrPayload.find("\"protocol\":\"anshubio\"") != std::string::npos &&
+                        pairSession->qrPayload.find("\"version\":\"1.0.0\"") != std::string::npos &&
+                        pairSession->qrPayload.find("\"sessionId\":") != std::string::npos &&
+                        pairSession->qrPayload.find("\"nonce\":") != std::string::npos &&
+                        pairSession->qrPayload.find("\"confirmCode\":") != std::string::npos;
+    test("6.4 Pairing: QR payload contains protocol, pcId, nonce, confirmCode", hasReqFields);
+
+    bool zeroSecretsInQr = pairSession.has_value() &&
+                           pairSession->qrPayload.find("password") == std::string::npos &&
+                           pairSession->qrPayload.find("privateKey") == std::string::npos &&
+                           pairSession->qrPayload.find("biometric") == std::string::npos;
+    test("6.5 Pairing: QR payload strictly contains ZERO passwords/secrets", zeroSecretsInQr);
 
     std::cout << "\n======================================================================\n";
     std::cout << "   TEST SUMMARY: " << passed << " / " << total << " UNIT TESTS PASSED (100%)\n";

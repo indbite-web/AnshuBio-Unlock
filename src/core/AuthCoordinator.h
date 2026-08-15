@@ -13,11 +13,21 @@ class BluetoothServer;
 
 struct PairingSession {
     std::string sessionId;
+    std::string nonce;
     std::string confirmCode;
+    std::string qrPayload;
+    std::string ipAddress;
+    int port = 42425;
+    std::string btUuid = "00001101-0000-1000-8000-00805F9B34FB";
+    std::string pcId;
+    std::string pcName;
+    std::string fingerprint;
+    int64_t createdAt = 0;
+    int64_t expiresAt = 0;
     TrustedPhone pendingPhone;
     bool pcConfirmed = false;
     bool phoneConfirmed = false;
-    int64_t createdAt = 0;
+    std::string status = "WAITING_FOR_PHONE"; // "WAITING_FOR_PHONE", "PHONE_FOUND", "CONFIRMATION_REQUIRED", "PAIRED", "EXPIRED", "CANCELLED"
 };
 
 class AuthCoordinator {
@@ -47,6 +57,7 @@ public:
 
     // Pairing workflow
     std::optional<PairingSession> InitiatePairingSession();
+    std::optional<PairingSession> GetActivePairingSession() const;
     bool ConfirmPairingFromPc(const std::string& sessionId);
     void CancelPairing();
 
@@ -58,11 +69,11 @@ private:
 
     mutable std::mutex m_mutex;
     CryptoEngine m_cryptoEngine;
-    std::optional<AuthChallenge> m_activeChallenge;
-    std::optional<PairingSession> m_pendingPairing;
-
     WiFiServer* m_wifiServer = nullptr;
     BluetoothServer* m_btServer = nullptr;
+
+    std::optional<AuthChallenge> m_activeChallenge;
+    std::optional<PairingSession> m_pendingPairing;
     bool m_isRunning = false;
 };
 

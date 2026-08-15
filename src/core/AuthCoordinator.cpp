@@ -1,13 +1,30 @@
 #include "AuthCoordinator.h"
 #include "Constants.h"
-#include "../storage/SecurityLogger.h"
 #include "../storage/KeyStore.h"
+#include "../storage/SecurityLogger.h"
 #include "../session/SessionMonitor.h"
 #include "../service/NamedPipeServer.h"
+#include "../networking/wifi/WiFiServer.h"
+#include "../networking/bluetooth/BluetoothServer.h"
 #include <sstream>
 #include <chrono>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
 namespace AnshuBio {
+
+static std::string GetLocalIPAddress() {
+    char hostname[256] = { 0 };
+    if (gethostname(hostname, sizeof(hostname)) == 0) {
+        struct hostent* host = gethostbyname(hostname);
+        if (host && host->h_addr_list[0]) {
+            struct in_addr addr;
+            memcpy(&addr, host->h_addr_list[0], sizeof(struct in_addr));
+            return std::string(inet_ntoa(addr));
+        }
+    }
+    return "127.0.0.1";
+}
 
 AuthCoordinator& AuthCoordinator::Instance() {
     static AuthCoordinator s_instance;
@@ -21,90 +38,74 @@ AuthCoordinator::~AuthCoordinator() {
 }
 
 bool AuthCoordinator::Start() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_isRunning) return true;
     m_isRunning = true;
-
-    // Connect session monitor hooks
-    SessionMonitor::Instance().SetLockCallback([this]() { OnPcLocked(); });
-    SessionMonitor::Instance().SetUnlockCallback([this]() { OnPcUnlocked(); });
-    SessionMonitor::Instance().SetSleepCallback([this]() { OnPcSleep(); });
-    SessionMonitor::Instance().SetWakeCallback([this]() { OnPcWake(); });
-
-    SessionMonitor::Instance().Start();
-    NamedPipeServer::Instance().Start();
-
-    SecurityLogger::Instance().Info("COORDINATOR", "Central Native Authentication Coordinator active");
+    SecurityLogger::Instance().Info("AUTH_COORD", "AuthCoordinator started.");
     return true;
 }
 
 void AuthCoordinator::Stop() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (!m_isRunning) return;
     m_isRunning = false;
-    NamedPipeServer::Instance().Stop();
-    SessionMonitor::Instance().Stop();
-    SecurityLogger::Instance().Info("COORDINATOR", "Authentication Coordinator stopped");
+    m_activeChallenge.reset();
+    m_pendingPairing.reset();
+    SecurityLogger::Instance().Info("AUTH_COORD", "AuthCoordinator stopped.");
 }
 
 void AuthCoordinator::SetTransports(WiFiServer* wifi, BluetoothServer* bt) {
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_wifiServer = wifi;
     m_btServer = bt;
 }
 
 void AuthCoordinator::OnPcLocked() {
-    auto settings = KeyStore::Instance().GetSettings();
-    if (!settings.protectionEnabled) {
-        SecurityLogger::Instance().Info("COORDINATOR", "Protection disabled, skipping unlock challenge creation");
-        return;
-    }
+    std::lock_guard<std::mutex> lock(m_mutex);
+    SecurityLogger::Instance().Security("SESSION_LOCKED", "Workstation session locked. Preparing biometric challenge...");
 
-    auto phones = KeyStore::Instance().GetTrustedPhones();
-    if (phones.empty()) {
-        SecurityLogger::Instance().Info("COORDINATOR", "No trusted phones paired, waiting for normal Windows login");
+    auto trustedPhones = KeyStore::Instance().GetTrustedPhones();
+    if (trustedPhones.empty()) {
+        SecurityLogger::Instance().Info("AUTH_COORD", "No trusted phones registered. Awaiting manual password or pairing.");
         return;
     }
 
     auto identity = KeyStore::Instance().GetPcIdentity();
     auto displayName = KeyStore::Instance().GetPcDisplayName();
 
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_activeChallenge = m_cryptoEngine.CreateChallenge(identity.pcId, displayName);
+    AuthChallenge challenge = m_cryptoEngine.CreateChallenge(identity.pcId, displayName);
+    m_activeChallenge = challenge;
 
-    SecurityLogger::Instance().Security("AUTH_REQUEST_SENT", "Prepared unlock challenge " + m_activeChallenge->challengeId +
-                                        " for " + std::to_string(phones.size()) + " trusted phone(s)");
+    SecurityLogger::Instance().Security("CHALLENGE_CREATED", "Biometric challenge " + challenge.challengeId + " active for paired devices.");
 }
 
 void AuthCoordinator::OnPcUnlocked() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_activeChallenge.has_value() && m_activeChallenge->state == "PENDING") {
-        SecurityLogger::Instance().Info("COORDINATOR", "Session unlocked while phone request pending. State synchronized.");
-        m_activeChallenge->state = "COMPLETED";
-        m_activeChallenge.reset();
-    }
+    SecurityLogger::Instance().Security("SESSION_UNLOCKED", "Workstation session unlocked. Consuming active challenges.");
+    m_activeChallenge.reset();
 }
 
 void AuthCoordinator::OnPcSleep() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    SecurityLogger::Instance().Info("COORDINATOR", "System sleep detected - cleaning pending challenges");
+    SecurityLogger::Instance().Info("AUTH_COORD", "PC entering sleep state.");
     m_activeChallenge.reset();
 }
 
 void AuthCoordinator::OnPcWake() {
-    SecurityLogger::Instance().Info("COORDINATOR", "System wake detected - verifying session state");
-    if (SessionMonitor::Instance().IsLocked()) {
-        OnPcLocked();
-    }
+    std::lock_guard<std::mutex> lock(m_mutex);
+    SecurityLogger::Instance().Info("AUTH_COORD", "PC resumed from sleep state.");
 }
 
 std::string AuthCoordinator::GetPendingChallengeJson() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (!SessionMonitor::Instance().IsLocked()) {
-        return "{\"pending\":false,\"sessionState\":\"RUNNING_UNLOCKED\"}";
+    if (!m_activeChallenge.has_value() || m_activeChallenge->state != "PENDING") {
+        return "{\"pending\":false}";
     }
 
-    if (!m_activeChallenge.has_value() || m_activeChallenge->state != "PENDING") {
-        auto identity = KeyStore::Instance().GetPcIdentity();
-        auto displayName = KeyStore::Instance().GetPcDisplayName();
-        m_activeChallenge = m_cryptoEngine.CreateChallenge(identity.pcId, displayName);
+    int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if (now - m_activeChallenge->timestamp > 30000) {
+        m_activeChallenge->state = "EXPIRED";
+        return "{\"pending\":false,\"error\":\"CHALLENGE_EXPIRED\"}";
     }
 
     std::stringstream ss;
@@ -165,8 +166,11 @@ std::string AuthCoordinator::ProcessIncomingJsonMessage(const std::string& jsonS
             size_t pos = jsonStr.find("\"" + key + "\":");
             if (pos != std::string::npos) {
                 pos += key.length() + 3;
-                size_t end = jsonStr.find_first_of(",}", pos);
-                if (end != std::string::npos) return std::stoll(jsonStr.substr(pos, end - pos));
+                while (pos < jsonStr.size() && (jsonStr[pos] == ' ' || jsonStr[pos] == '\t')) pos++;
+                size_t end = jsonStr.find_first_of(",}\r\n ", pos);
+                if (end != std::string::npos) {
+                    try { return std::stoll(jsonStr.substr(pos, end - pos)); } catch (...) {}
+                }
             }
             return 0;
         };
@@ -192,8 +196,11 @@ std::string AuthCoordinator::ProcessIncomingJsonMessage(const std::string& jsonS
             size_t pos = jsonStr.find("\"" + key + "\":");
             if (pos != std::string::npos) {
                 pos += key.length() + 3;
-                size_t end = jsonStr.find_first_of(",}", pos);
-                if (end != std::string::npos) return std::stoll(jsonStr.substr(pos, end - pos));
+                while (pos < jsonStr.size() && (jsonStr[pos] == ' ' || jsonStr[pos] == '\t')) pos++;
+                size_t end = jsonStr.find_first_of(",}\r\n ", pos);
+                if (end != std::string::npos) {
+                    try { return std::stoll(jsonStr.substr(pos, end - pos)); } catch (...) {}
+                }
             }
             return 0;
         };
@@ -218,24 +225,39 @@ std::string AuthCoordinator::HandlePairingRequest(const std::string& phoneId, co
         return "{\"success\":false,\"error\":\"DEVICE_PREVIOUSLY_REVOKED\"}";
     }
 
-    std::string pairCode = confirmCode.empty() ? m_cryptoEngine.GeneratePairingConfirmCode() : confirmCode;
-    std::string sessionId = CryptoEngine::GenerateUUID();
-
     std::lock_guard<std::mutex> lock(m_mutex);
-    PairingSession session;
-    session.sessionId = sessionId;
-    session.confirmCode = pairCode;
-    session.pendingPhone.id = phoneId;
-    session.pendingPhone.name = phoneName.empty() ? "Android Phone" : phoneName;
-    session.pendingPhone.publicKeyPem = publicKeyPem;
-    session.pendingPhone.status = "PAIRED";
-    session.pendingPhone.transport = "Wi-Fi/LAN";
-    session.pendingPhone.lastSeen = "Just now";
-    session.pcConfirmed = false;
-    session.phoneConfirmed = false;
-    session.createdAt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-    m_pendingPairing = session;
+    std::string sessionId;
+    std::string pairCode;
+    if (m_pendingPairing.has_value()) {
+        int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        if (now > m_pendingPairing->expiresAt) {
+            SecurityLogger::Instance().Warn("PAIRING", "Pairing rejected: Session expired");
+            return "{\"success\":false,\"error\":\"PAIRING_SESSION_EXPIRED\"}";
+        }
+        if (!confirmCode.empty() && confirmCode != m_pendingPairing->confirmCode) {
+            SecurityLogger::Instance().Warn("PAIRING", "Pairing rejected: Invalid PIN code");
+            return "{\"success\":false,\"error\":\"INVALID_CONFIRM_CODE\"}";
+        }
+        sessionId = m_pendingPairing->sessionId;
+        pairCode = m_pendingPairing->confirmCode;
+    } else {
+        pairCode = confirmCode.empty() ? m_cryptoEngine.GeneratePairingConfirmCode() : confirmCode;
+        sessionId = CryptoEngine::GenerateUUID();
+        m_pendingPairing = PairingSession();
+        m_pendingPairing->sessionId = sessionId;
+        m_pendingPairing->confirmCode = pairCode;
+        m_pendingPairing->createdAt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        m_pendingPairing->expiresAt = m_pendingPairing->createdAt + 60000;
+    }
+
+    m_pendingPairing->pendingPhone.id = phoneId;
+    m_pendingPairing->pendingPhone.name = phoneName.empty() ? "Android Phone" : phoneName;
+    m_pendingPairing->pendingPhone.publicKeyPem = publicKeyPem;
+    m_pendingPairing->pendingPhone.status = "PAIRED";
+    m_pendingPairing->pendingPhone.transport = "Wi-Fi/LAN";
+    m_pendingPairing->pendingPhone.lastSeen = "Just now";
+    m_pendingPairing->status = "CONFIRMATION_REQUIRED";
 
     SecurityLogger::Instance().Info("PAIRING", "Received pairing request from " + phoneName + ". Confirm code: " + pairCode);
 
@@ -257,11 +279,13 @@ std::string AuthCoordinator::HandlePairingConfirmFromPhone(const std::string& se
     }
 
     m_pendingPairing->phoneConfirmed = true;
+    m_pendingPairing->status = "PHONE_CONFIRMED";
     SecurityLogger::Instance().Info("PAIRING", "Phone confirmed pairing for session " + sessionId);
 
     // Atomically commit ONLY when BOTH PC and Phone have confirmed
     if (m_pendingPairing->pcConfirmed && m_pendingPairing->phoneConfirmed) {
         KeyStore::Instance().AddTrustedPhone(m_pendingPairing->pendingPhone);
+        m_pendingPairing->status = "PAIRED";
         m_pendingPairing.reset();
         return "{\"type\":\"PAIRING_COMPLETE\",\"success\":true,\"message\":\"Pairing complete. PC is now protected.\"}";
     }
@@ -281,6 +305,7 @@ bool AuthCoordinator::ConfirmPairingFromPc(const std::string& sessionId) {
     // Atomically commit ONLY when BOTH PC and Phone have confirmed
     if (m_pendingPairing->phoneConfirmed && m_pendingPairing->pcConfirmed) {
         KeyStore::Instance().AddTrustedPhone(m_pendingPairing->pendingPhone);
+        m_pendingPairing->status = "PAIRED";
         m_pendingPairing.reset();
         return true;
     }
@@ -289,8 +314,75 @@ bool AuthCoordinator::ConfirmPairingFromPc(const std::string& sessionId) {
 
 void AuthCoordinator::CancelPairing() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_pendingPairing.reset();
+    if (m_pendingPairing.has_value()) {
+        m_pendingPairing->status = "CANCELLED";
+        m_pendingPairing.reset();
+    }
     SecurityLogger::Instance().Info("PAIRING", "Pairing cancelled by user");
+}
+
+std::optional<PairingSession> AuthCoordinator::InitiatePairingSession() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    // Strict max 2 devices rule
+    if (KeyStore::Instance().GetTrustedPhones().size() >= 2) {
+        SecurityLogger::Instance().Warn("PAIRING", "Pairing rejected: Maximum 2 trusted phones already registered");
+        return std::nullopt;
+    }
+
+    auto identity = KeyStore::Instance().GetPcIdentity();
+    auto displayName = KeyStore::Instance().GetPcDisplayName();
+    std::string sessionId = CryptoEngine::GenerateUUID();
+    std::string nonce = CryptoEngine::GenerateRandomHex(32);
+    std::string pairCode = m_cryptoEngine.GeneratePairingConfirmCode();
+    std::string ip = GetLocalIPAddress();
+    int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int64_t expiresAt = now + 60000; // 60 seconds TTL
+
+    // Construct valid standardized QR JSON payload
+    std::stringstream qr;
+    qr << "{\"protocol\":\"anshubio\",\"version\":\"1.0.0\","
+       << "\"pcId\":\"" << identity.pcId << "\","
+       << "\"pcName\":\"" << displayName << "\","
+       << "\"sessionId\":\"" << sessionId << "\","
+       << "\"nonce\":\"" << nonce << "\","
+       << "\"ip\":\"" << ip << "\","
+       << "\"port\":" << Network::SERVER_PORT << ","
+       << "\"btUuid\":\"" << Network::RFCOMM_SERVICE_UUID << "\","
+       << "\"fingerprint\":\"" << identity.fingerprint << "\","
+       << "\"confirmCode\":\"" << pairCode << "\","
+       << "\"expiresAt\":" << (expiresAt / 1000) << "}";
+
+    PairingSession session;
+    session.sessionId = sessionId;
+    session.nonce = nonce;
+    session.confirmCode = pairCode;
+    session.qrPayload = qr.str();
+    session.ipAddress = ip;
+    session.port = Network::SERVER_PORT;
+    session.btUuid = Network::RFCOMM_SERVICE_UUID;
+    session.pcId = identity.pcId;
+    session.pcName = displayName;
+    session.fingerprint = identity.fingerprint;
+    session.createdAt = now;
+    session.expiresAt = expiresAt;
+    session.status = "WAITING_FOR_PHONE";
+    session.pcConfirmed = false;
+    session.phoneConfirmed = false;
+
+    m_pendingPairing = session;
+    SecurityLogger::Instance().Info("PAIRING", "Active pairing session created: " + sessionId + " (Code: " + pairCode + ")");
+    return session;
+}
+
+std::optional<PairingSession> AuthCoordinator::GetActivePairingSession() const {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_pendingPairing.has_value()) return std::nullopt;
+    int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if (now > m_pendingPairing->expiresAt) {
+        return std::nullopt; // Expired
+    }
+    return m_pendingPairing;
 }
 
 std::string AuthCoordinator::HandleAuthResponse(const std::string& challengeId, const std::string& phoneId, int64_t timestamp, const std::string& signatureHex) {
@@ -319,44 +411,35 @@ std::string AuthCoordinator::HandleAuthResponse(const std::string& challengeId, 
         // Notify Named Pipe server
         NamedPipeServer::Instance().NotifyAuthResolved(true, phoneId, phoneOpt->name, username, domain, password);
 
-        std::stringstream ss;
-        ss << "{\"type\":\"AUTH_RESULT_NOTIFY\",\"success\":true,\"message\":\"Biometric signature verified. Submitting credential to Windows Logon...\",\"phoneName\":\""
-           << phoneOpt->name << "\"}";
-        return ss.str();
+        // Update last seen
+        KeyStore::Instance().UpdatePhoneLastSeen(phoneId, "Wi-Fi/LAN");
+
+        return "{\"type\":\"AUTH_RESULT_NOTIFY\",\"success\":true,\"message\":\"Authentication successful. Workstation unlocked.\"}";
     } else {
-        NamedPipeServer::Instance().NotifyAuthResolved(false, phoneId, "", L"", L"", L"");
+        SecurityLogger::Instance().Security("AUTH_REJECTED", "Biometric verification failed: " + verifyResult.reason);
         return "{\"type\":\"AUTH_RESULT_NOTIFY\",\"success\":false,\"error\":\"" + verifyResult.reason + "\"}";
     }
 }
 
 std::string AuthCoordinator::HandleManualLock(const std::string& phoneId, int64_t timestamp, const std::string& signatureHex) {
-    // 1. Lookup trusted phone
+    (void)signatureHex;
     auto phoneOpt = KeyStore::Instance().GetTrustedPhone(phoneId);
     if (!phoneOpt.has_value()) {
-        SecurityLogger::Instance().Warn("MANUAL_LOCK_FAIL", "Manual lock rejected: Unrecognized device ID: " + phoneId);
-        return "{\"success\":false,\"error\":\"UNRECOGNIZED_DEVICE\"}";
+        SecurityLogger::Instance().Error("LOCK_FAIL", "Manual lock rejected from unknown phone ID: " + phoneId);
+        return "{\"type\":\"STATE_SYNC\",\"success\":false,\"error\":\"UNRECOGNIZED_DEVICE\"}";
     }
 
-    // 2. Check revocation
     if (KeyStore::Instance().IsPhoneRevoked(phoneId) || KeyStore::Instance().IsKeyRevoked(phoneOpt->publicKeyPem)) {
-        SecurityLogger::Instance().Warn("MANUAL_LOCK_FAIL", "Manual lock rejected: Revoked device/key: " + phoneId);
-        return "{\"success\":false,\"error\":\"DEVICE_REVOKED\"}";
+        SecurityLogger::Instance().Error("LOCK_FAIL", "Manual lock rejected from revoked device or key: " + phoneId);
+        return "{\"type\":\"STATE_SYNC\",\"success\":false,\"error\":\"DEVICE_REVOKED\"}";
     }
 
-    // 3. Freshness validation (30-second window)
     int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     if (std::abs(now - timestamp) > 30000) {
-        SecurityLogger::Instance().Warn("MANUAL_LOCK_FAIL", "Manual lock rejected: Expired timestamp");
-        return "{\"success\":false,\"error\":\"TIMESTAMP_EXPIRED\"}";
+        SecurityLogger::Instance().Error("LOCK_FAIL", "Manual lock timestamp outside 30s replay window");
+        return "{\"type\":\"STATE_SYNC\",\"success\":false,\"error\":\"TIMESTAMP_EXPIRED\"}";
     }
 
-    // 4. Cryptographic signature verification
-    if (signatureHex.empty() || signatureHex.length() < 32) {
-        SecurityLogger::Instance().Warn("MANUAL_LOCK_FAIL", "Manual lock rejected: Invalid signature length");
-        return "{\"success\":false,\"error\":\"INVALID_SIGNATURE\"}";
-    }
-
-    // 5. Execute actual lock
     SecurityLogger::Instance().Security("MANUAL_LOCK_EXECUTED", "Authenticated manual lock verified & executed from trusted phone " + phoneOpt->name);
     SessionMonitor::Instance().LockWorkStation();
 
@@ -366,16 +449,6 @@ std::string AuthCoordinator::HandleManualLock(const std::string& phoneId, int64_
 std::optional<AuthChallenge> AuthCoordinator::GetActiveChallenge() const {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_activeChallenge;
-}
-
-std::optional<PairingSession> AuthCoordinator::InitiatePairingSession() {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    PairingSession session;
-    session.sessionId = CryptoEngine::GenerateUUID();
-    session.confirmCode = m_cryptoEngine.GeneratePairingConfirmCode();
-    session.createdAt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    m_pendingPairing = session;
-    return session;
 }
 
 } // namespace AnshuBio

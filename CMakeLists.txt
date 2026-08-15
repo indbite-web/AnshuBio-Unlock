@@ -48,6 +48,10 @@ set(CORE_SOURCES
     src/networking/bluetooth/BluetoothHelper.cpp
     src/networking/bluetooth/BluetoothServer.h
     src/networking/bluetooth/BluetoothServer.cpp
+    src/crypto/QrCode.hpp
+    src/crypto/QrCode.cpp
+    src/ui/PairingDialog.h
+    src/ui/PairingDialog.cpp
     src/ui/NativeWin32Window.h
     src/ui/NativeWin32Window.cpp
 )

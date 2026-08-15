@@ -1,4 +1,5 @@
 #include "NativeWin32Window.h"
+#include "PairingDialog.h"
 #include "../core/Constants.h"
 #include "../core/AuthCoordinator.h"
 #include "../storage/KeyStore.h"
@@ -239,13 +240,9 @@ LRESULT NativeWin32Window::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPA
             return 0;
         }
         if (id == ID_BTN_PAIR) {
-            auto session = AuthCoordinator::Instance().InitiatePairingSession();
-            if (session.has_value()) {
-                std::wstring code(session->confirmCode.begin(), session->confirmCode.end());
-                SetWindowTextW(m_hPairCodeLabel, (L"Pairing PIN: " + code + L" (Enter on Android App)").c_str());
-                SecurityLogger::Instance().Info("UI", "Mutual pairing session initiated: " + session->confirmCode);
-                UpdateLogs();
-            }
+            PairingDialog::ShowModal(m_hWnd);
+            UpdateDashboard();
+            UpdateLogs();
             return 0;
         }
         if (id == ID_TRAY_RESTORE) {
