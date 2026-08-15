@@ -1,9 +1,12 @@
 #include "WindowsService.h"
+#include "NamedPipeServer.h"
 #include "../core/Constants.h"
 #include "../core/AuthCoordinator.h"
+#include "../storage/KeyStore.h"
+#include "../storage/SecurityLogger.h"
+#include "../session/SessionMonitor.h"
 #include "../networking/wifi/WiFiServer.h"
 #include "../networking/bluetooth/BluetoothServer.h"
-#include "../storage/SecurityLogger.h"
 
 namespace AnshuBio {
 
@@ -62,11 +65,20 @@ void WINAPI WindowsService::ServiceMain(DWORD argc, LPWSTR* argv) {
     Instance().m_serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     Instance().m_serviceStatus.dwCurrentState = SERVICE_START_PENDING;
     Instance().m_serviceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_POWEREVENT;
-    Instance().ReportServiceStatus(SERVICE_START_PENDING, NO_ERROR, 3000);
+    Instance().ReportServiceStatus(SERVICE_START_PENDING, NO_ERROR, 5000);
 
     Instance().m_stopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
-    // Initialize core authentication & networking components
+    // 1. Initialize KeyStore & DPAPI Vault
+    KeyStore::Instance().Load();
+
+    // 2. Initialize Named Pipe Server for Credential Provider IPC
+    NamedPipeServer::Instance().Start();
+
+    // 3. Initialize Session Monitor for Lock/Unlock Events
+    SessionMonitor::Instance().Start();
+
+    // 4. Initialize Core Authentication & Networking Transports
     WiFiServer wifiServer(&AuthCoordinator::Instance());
     BluetoothServer btServer(&AuthCoordinator::Instance());
 
@@ -76,15 +88,17 @@ void WINAPI WindowsService::ServiceMain(DWORD argc, LPWSTR* argv) {
     btServer.Start();
 
     Instance().ReportServiceStatus(SERVICE_RUNNING, NO_ERROR, 0);
-    SecurityLogger::Instance().Security("SERVICE_ACTIVE", "AnshuBio Unlock Background Windows Service is RUNNING");
+    SecurityLogger::Instance().Security("SERVICE_ACTIVE", "AnshuBio Unlock Background Windows Service is RUNNING (All subsystems active)");
 
     WaitForSingleObject(Instance().m_stopEvent, INFINITE);
 
-    Instance().ReportServiceStatus(SERVICE_STOP_PENDING, NO_ERROR, 3000);
+    Instance().ReportServiceStatus(SERVICE_STOP_PENDING, NO_ERROR, 5000);
 
     wifiServer.Stop();
     btServer.Stop();
     AuthCoordinator::Instance().Stop();
+    SessionMonitor::Instance().Stop();
+    NamedPipeServer::Instance().Stop();
 
     Instance().ReportServiceStatus(SERVICE_STOPPED, NO_ERROR, 0);
     SecurityLogger::Instance().Security("SERVICE_STOP", "AnshuBio Unlock Background Service cleanly terminated");
@@ -94,7 +108,7 @@ void WINAPI WindowsService::ServiceCtrlHandler(DWORD ctrlCode) {
     switch (ctrlCode) {
     case SERVICE_CONTROL_STOP:
     case SERVICE_CONTROL_SHUTDOWN:
-        Instance().ReportServiceStatus(SERVICE_STOP_PENDING, NO_ERROR, 3000);
+        Instance().ReportServiceStatus(SERVICE_STOP_PENDING, NO_ERROR, 5000);
         if (Instance().m_stopEvent) {
             SetEvent(Instance().m_stopEvent);
         }
@@ -154,8 +168,17 @@ bool WindowsService::InstallService() {
     );
 
     if (!hService) {
-        CloseServiceHandle(hSCM);
-        return false;
+        DWORD err = GetLastError();
+        if (err == ERROR_SERVICE_EXISTS) {
+            hService = OpenServiceW(hSCM, L"AnshuBioUnlockService", SERVICE_ALL_ACCESS);
+            if (hService) {
+                ChangeServiceConfigW(hService, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, serviceCmd.c_str(), nullptr, nullptr, nullptr, nullptr, nullptr, L"AnshuBio Unlock Background Service");
+            }
+        }
+        if (!hService) {
+            CloseServiceHandle(hSCM);
+            return false;
+        }
     }
 
     // Set Service Description
