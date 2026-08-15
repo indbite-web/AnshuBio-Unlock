@@ -131,6 +131,10 @@ else()
         shell32
     )
 
+    if (NOT MSVC)
+        target_link_options(AnshuBioUnlock PRIVATE -mwindows)
+    endif()
+
     anshubio_apply_security_flags(AnshuBioUnlock)
 endif()
 
