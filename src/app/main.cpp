@@ -1,21 +1,12 @@
 #include <windows.h>
 #include <string>
-#include <vector>
-#include <memory>
-
-#include "../core/Constants.h"
-#include "../core/AuthCoordinator.h"
-#include "../networking/wifi/WiFiServer.h"
-#include "../networking/bluetooth/BluetoothServer.h"
-#include "../storage/SecurityLogger.h"
 #include "../service/WindowsService.h"
-#include "../session/SessionMonitor.h"
 
 #if defined(ANSHUBIO_USE_QT)
 #include <QApplication>
+#include "../core/Constants.h"
 #include "../ui/MainWindow.h"
 #else
-#include "../ui/NativeWin32Window.h"
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow);
 #endif
 
