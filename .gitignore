@@ -1,0 +1,42 @@
+# Build directories
+build/
+bin/
+lib/
+out/
+dist/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Compiler and IDE artifacts
+*.obj
+*.o
+*.exe
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.idb
+*.tlog
+*.log
+*.tmp
+
+# VS Code / IDE settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+.vs/
+.idea/
+*.user
+
+# Inno Setup output
+Output/
+*.iss.backup
+
+# DPAPI Vault local test data
+*.vault
+security.log

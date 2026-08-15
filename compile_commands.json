@@ -1,0 +1,104 @@
+[
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\tests\\TestRunner.cpp.obj -c \"C:\\AnshuBio Unlock\\tests\\TestRunner.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\tests\\TestRunner.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\tests\\TestRunner.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\core\\AuthCoordinator.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\core\\AuthCoordinator.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\core\\AuthCoordinator.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\core\\AuthCoordinator.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\crypto\\DPAPIVault.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\crypto\\DPAPIVault.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\crypto\\DPAPIVault.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\crypto\\DPAPIVault.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\crypto\\CryptoEngine.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\crypto\\CryptoEngine.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\crypto\\CryptoEngine.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\crypto\\CryptoEngine.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\storage\\SecurityLogger.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\storage\\SecurityLogger.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\storage\\SecurityLogger.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\storage\\SecurityLogger.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\storage\\KeyStore.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\storage\\KeyStore.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\storage\\KeyStore.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\storage\\KeyStore.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\session\\SessionMonitor.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\session\\SessionMonitor.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\session\\SessionMonitor.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\session\\SessionMonitor.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\service\\NamedPipeServer.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\service\\NamedPipeServer.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\service\\NamedPipeServer.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\service\\NamedPipeServer.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\service\\WindowsService.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\service\\WindowsService.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\service\\WindowsService.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\service\\WindowsService.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\networking\\wifi\\UDPBeacon.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\networking\\wifi\\UDPBeacon.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\networking\\wifi\\UDPBeacon.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\networking\\wifi\\UDPBeacon.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\networking\\wifi\\WiFiServer.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\networking\\wifi\\WiFiServer.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\networking\\wifi\\WiFiServer.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\networking\\wifi\\WiFiServer.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\networking\\bluetooth\\BluetoothHelper.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\networking\\bluetooth\\BluetoothHelper.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\networking\\bluetooth\\BluetoothHelper.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\networking\\bluetooth\\BluetoothHelper.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DNOMINMAX -DUNICODE -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS -D_UNICODE -I\"C:/AnshuBio Unlock/src\" -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -fstack-protector-strong -o CMakeFiles\\AnshuBioTests.dir\\src\\networking\\bluetooth\\BluetoothServer.cpp.obj -c \"C:\\AnshuBio Unlock\\src\\networking\\bluetooth\\BluetoothServer.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\src\\networking\\bluetooth\\BluetoothServer.cpp",
+  "output": "CMakeFiles\\AnshuBioTests.dir\\src\\networking\\bluetooth\\BluetoothServer.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DAnshuBioCredentialProvider_EXPORTS -DUNICODE -DWIN32_LEAN_AND_MEAN -D_UNICODE -O3 -DNDEBUG -std=gnu++17 -o credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\AnshuBioCredentialProvider.cpp.obj -c \"C:\\AnshuBio Unlock\\credential_provider\\AnshuBioCredentialProvider.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\credential_provider\\AnshuBioCredentialProvider.cpp",
+  "output": "credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\AnshuBioCredentialProvider.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DAnshuBioCredentialProvider_EXPORTS -DUNICODE -DWIN32_LEAN_AND_MEAN -D_UNICODE -O3 -DNDEBUG -std=gnu++17 -o credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\AnshuBioCredential.cpp.obj -c \"C:\\AnshuBio Unlock\\credential_provider\\AnshuBioCredential.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\credential_provider\\AnshuBioCredential.cpp",
+  "output": "credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\AnshuBioCredential.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DAnshuBioCredentialProvider_EXPORTS -DUNICODE -DWIN32_LEAN_AND_MEAN -D_UNICODE -O3 -DNDEBUG -std=gnu++17 -o credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\Dll.cpp.obj -c \"C:\\AnshuBio Unlock\\credential_provider\\Dll.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\credential_provider\\Dll.cpp",
+  "output": "credential_provider\\CMakeFiles\\AnshuBioCredentialProvider.dir\\Dll.cpp.obj"
+},
+{
+  "directory": "C:/AnshuBio Unlock/build",
+  "command": "C:\\Users\\user\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BrechtSanders.WinLibs.POSIX.UCRT.LLVM_Microsoft.Winget.Source_8wekyb3d8bbwe\\mingw64\\bin\\c++.exe -DUNICODE -DWIN32_LEAN_AND_MEAN -D_UNICODE -O3 -DNDEBUG -std=gnu++17 -o credential_provider\\CMakeFiles\\AnshuBioSessionMonitor.dir\\AnshuBioSessionMonitor.cpp.obj -c \"C:\\AnshuBio Unlock\\credential_provider\\AnshuBioSessionMonitor.cpp\"",
+  "file": "C:\\AnshuBio Unlock\\credential_provider\\AnshuBioSessionMonitor.cpp",
+  "output": "credential_provider\\CMakeFiles\\AnshuBioSessionMonitor.dir\\AnshuBioSessionMonitor.cpp.obj"
+}
+]
